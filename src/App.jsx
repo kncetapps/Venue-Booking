@@ -13,6 +13,7 @@ import MyBookings from './pages/MyBookings'
 import Profile from './pages/Profile'
 import ResetPassword from './pages/ResetPassword'
 import Signup from './pages/Signup'
+import Masters from './pages/admin/Masters'
 import Users from './pages/admin/Users'
 
 function Splash() {
@@ -68,6 +69,7 @@ export default function App() {
         <Route path="reports" element={<ComingSoon title="Reports" />} />
         <Route path="profile" element={<Profile />} />
         {isAdmin && <Route path="admin/users" element={<Users />} />}
+        {isAdmin && <Route path="admin/masters" element={<Masters />} />}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Route>
     </Routes>

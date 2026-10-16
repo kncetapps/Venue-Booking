@@ -31,6 +31,9 @@ export default function BookingCard({ b, showDate = false, showContact = true, a
         <div className="min-w-0">
           <div className="flex items-center gap-2 text-sm font-semibold" style={{ color: b.venue_color }}>
             <VenueDot color={b.venue_color} /> {b.venue_name}
+            {b.venue_location && b.venue_location !== b.venue_name && (
+              <span className="font-normal text-slate-500">· {b.venue_location}</span>
+            )}
           </div>
           <h3 className="mt-1 text-[15px] leading-snug font-semibold">{b.title}</h3>
           <div className="mt-0.5 text-sm text-slate-600 dark:text-slate-400">

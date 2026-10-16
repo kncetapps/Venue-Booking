@@ -259,7 +259,7 @@ export default function BookingForm() {
               >
                 <div className="flex items-center gap-2 font-semibold"><VenueDot color={v.color} />{v.name}</div>
                 <div className="mt-0.5 text-xs text-slate-500">
-                  {v.capacity ? `${v.capacity} seats` : 'Capacity not set'}{v.facilities ? ` · ${v.facilities}` : ''}
+                  {[v.location !== v.name && v.location, v.capacity && `${v.capacity} seats`, v.facilities].filter(Boolean).join(' · ') || '\u00a0'}
                 </div>
               </button>
             )
@@ -286,7 +286,7 @@ export default function BookingForm() {
         <Section
           n={4}
           title="Time"
-          hint={form.booking_date ? `${venue?.name} · ${fmtDateLong(form.booking_date)}` : 'Choose a date first.'}
+          hint={form.booking_date ? `${venue?.name}${venue?.location && venue.location !== venue.name ? ` (${venue.location})` : ''} · ${fmtDateLong(form.booking_date)}` : 'Choose a date first.'}
           disabled={!form.booking_date}
         >
           {form.booking_date && (

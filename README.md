@@ -18,7 +18,7 @@ Departments book seminar halls and auditoriums; the admin approves; confirmation
 
 `supabase/migrations/20261016000000_foundation.sql` creates:
 
-- `departments`, `event_types`, `venues` — admin-editable masters (seeded with the default lists)
+- `departments`, `event_types`, `venues` — admin-editable masters. Current lists (migration `…0500_update_masters`): departments CSE, IT, Mech, BME, Agri, AIDS, Civil, EEE, ECE; halls Seminar Hall 1 (Ground Floor), Seminar Hall 2 (First Floor), Board Room (First Floor), Seminar Hall 4 (Fourth Floor), Open Auditorium
 - `profiles` — one per login; `role` (admin/user), `status` (pending/approved/rejected/inactive)
 - `bookings` — with a **Postgres exclusion constraint** (`no_overlapping_bookings`) so no two Pending / Approved / Cancel-requested bookings can overlap on the same venue, even if submitted at the same second. Back-to-back slots (12:00 end, 12:00 start) are allowed.
 - `booking_logs` — automatic history of every create / status change / reschedule / edit
