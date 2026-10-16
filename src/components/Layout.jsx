@@ -13,6 +13,7 @@ const ICONS = {
   mine: 'M8 6h13|M8 12h13|M8 18h13|M3 6h.01|M3 12h.01|M3 18h.01',
   reports: 'M4 20V10|M10 20V4|M16 20v-7|M22 20H2',
   users: 'M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2|M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8|M22 21v-2a4 4 0 0 0-3-3.87|M16 3.13a4 4 0 0 1 0 7.75',
+  profile: 'M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2|M12 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8',
   logout: 'M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4|M16 17l5-5-5-5|M21 12H9',
 }
 
@@ -58,8 +59,10 @@ export default function Layout() {
           )}
         </nav>
         <div className="border-t border-white/15 pt-4">
-          <div className="truncate px-2 text-sm font-semibold">{profile?.name}</div>
-          <div className="truncate px-2 text-xs text-blue-200">{profile?.department} · {isAdmin ? 'Admin' : 'Staff'}</div>
+          <NavLink to="/profile" className={({ isActive }) => `block rounded-xl px-2 py-1.5 hover:bg-white/10 ${isActive ? 'bg-white/15' : ''}`}>
+            <div className="truncate text-sm font-semibold">{profile?.name}</div>
+            <div className="truncate text-xs text-blue-200">{profile?.department} · {isAdmin ? 'Admin' : 'Staff'} · Edit profile</div>
+          </NavLink>
           <button onClick={signOut} className="mt-3 flex w-full items-center gap-3 rounded-xl px-3 py-2 text-sm text-blue-100 hover:bg-white/10">
             <Icon d={ICONS.logout} /> Log out
           </button>
@@ -76,6 +79,7 @@ export default function Layout() {
           {isAdmin && (
             <NavLink to="/admin/users" className="rounded-lg p-2 hover:bg-white/10" aria-label="Users"><Icon d={ICONS.users} /></NavLink>
           )}
+          <NavLink to="/profile" className="rounded-lg p-2 hover:bg-white/10" aria-label="My profile"><Icon d={ICONS.profile} /></NavLink>
           <button onClick={signOut} className="rounded-lg p-2 hover:bg-white/10" aria-label="Log out"><Icon d={ICONS.logout} /></button>
         </div>
       </header>

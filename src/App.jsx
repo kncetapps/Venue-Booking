@@ -7,6 +7,7 @@ import ComingSoon from './pages/ComingSoon'
 import Dashboard from './pages/Dashboard'
 import ForgotPassword from './pages/ForgotPassword'
 import Login from './pages/Login'
+import Profile from './pages/Profile'
 import ResetPassword from './pages/ResetPassword'
 import Signup from './pages/Signup'
 import Users from './pages/admin/Users'
@@ -61,6 +62,7 @@ export default function App() {
         <Route path="book" element={<ComingSoon title="New Booking" />} />
         <Route path="my-bookings" element={<ComingSoon title="My Bookings" />} />
         <Route path="reports" element={<ComingSoon title="Reports" />} />
+        <Route path="profile" element={<Profile />} />
         {isAdmin && <Route path="admin/users" element={<Users />} />}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Route>
