@@ -11,8 +11,8 @@ Departments book seminar halls and auditoriums; the admin approves; confirmation
 |---|---|---|
 | 1. Foundation | Tables, clash guard, security rules, seed data; sign-up → email verify → admin approval → login; forgot password; admin Users page | ✅ Applied to Supabase |
 | 2. Booking core | Booking form (venue → date → time, live clash check), calendar with day details, My Bookings (edit / withdraw / cancel request) | ✅ Live |
-| 3. Admin + mails | Approve/reject bookings and cancel requests, masters, Gmail SMTP mails with PDF | ⏳ |
-| 4. Reports + Android | Filters, PDF/Excel export, PWA, Play Store | ⏳ |
+| 3. Admin + mails | Approve/reject bookings and cancel requests ✅, Halls & Masters ✅, booking history ✅; Gmail SMTP mails with PDF ⏳ (needs college Gmail + App Password) | 🟡 |
+| 4. Reports + Android | Reports: month / date range, hall, department, event type, status filters; PDF + Excel export ✅; PWA, Play Store ⏳ | 🟡 |
 
 ## Database
 

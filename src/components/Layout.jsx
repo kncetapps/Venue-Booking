@@ -13,6 +13,7 @@ const ICONS = {
   mine: 'M8 6h13|M8 12h13|M8 18h13|M3 6h.01|M3 12h.01|M3 18h.01',
   reports: 'M4 20V10|M10 20V4|M16 20v-7|M22 20H2',
   users: 'M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2|M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8|M22 21v-2a4 4 0 0 0-3-3.87|M16 3.13a4 4 0 0 1 0 7.75',
+  inbox: 'M22 12h-6l-2 3h-4l-2-3H2|M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z',
   masters: 'M3 21h18|M5 21V7l7-4 7 4v14|M9 21v-6h6v6|M9 10h.01|M15 10h.01',
   profile: 'M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2|M12 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8',
   logout: 'M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4|M16 17l5-5-5-5|M21 12H9',
@@ -29,6 +30,7 @@ export default function Layout() {
     { to: '/reports', label: 'Reports', icon: 'reports' },
   ]
   const adminNav = [
+    { to: '/admin/requests', label: 'Requests', icon: 'inbox' },
     { to: '/admin/users', label: 'Users', icon: 'users' },
     { to: '/admin/masters', label: 'Halls & Masters', icon: 'masters' },
   ]
@@ -82,6 +84,7 @@ export default function Layout() {
         <div className="flex items-center gap-1">
           {isAdmin && (
             <>
+              <NavLink to="/admin/requests" className="rounded-lg p-2 hover:bg-white/10" aria-label="Requests"><Icon d={ICONS.inbox} /></NavLink>
               <NavLink to="/admin/users" className="rounded-lg p-2 hover:bg-white/10" aria-label="Users"><Icon d={ICONS.users} /></NavLink>
               <NavLink to="/admin/masters" className="rounded-lg p-2 hover:bg-white/10" aria-label="Halls and masters"><Icon d={ICONS.masters} /></NavLink>
             </>

@@ -4,6 +4,7 @@ import Autocomplete from '../components/Autocomplete'
 import { VenueDot } from '../components/BookingCard'
 import DayTimeline from '../components/DayTimeline'
 import MonthPicker from '../components/MonthPicker'
+import TimePicker from '../components/TimePicker'
 import { useAuth } from '../lib/auth'
 import {
   LIVE_STATUSES, addDays, fmtDateLong, fmtRange, fmtTime, fromMinutes, overlaps, pad, toMinutes, todayISO,
@@ -11,8 +12,6 @@ import {
 import { friendlyError, supabase } from '../lib/supabase'
 import { useMasters } from '../lib/useMasters'
 import { useSettings } from '../lib/useSettings'
-
-const STEP = 15 // minutes between time options
 
 function Section({ n, title, hint, children, disabled }) {
   return (
@@ -122,25 +121,25 @@ export default function BookingForm() {
   // ---- Time options within working hours ----
   const dayStart = settings.day_start.slice(0, 5)
   const dayEnd = settings.day_end.slice(0, 5)
-  const startOptions = useMemo(() => {
-    const out = []
-    for (let m = toMinutes(dayStart); m < toMinutes(dayEnd); m += STEP) out.push(fromMinutes(m))
-    return out
-  }, [dayStart, dayEnd])
-  const endOptions = useMemo(() => {
-    if (!form.start_time) return []
-    const out = []
-    for (let m = toMinutes(form.start_time) + STEP; m <= toMinutes(dayEnd); m += STEP) out.push(fromMinutes(m))
-    return out
-  }, [form.start_time, dayEnd])
-
-  // Is a start time already inside a booked slot? (used to grey out options)
   const buffer = settings.buffer_minutes || 0
-  const startTaken = (t) => dayBookings.some((b) =>
-    toMinutes(t) >= toMinutes(b.start_time) - buffer && toMinutes(t) < toMinutes(b.end_time) + buffer)
+
+  // Free gaps in the working day for this venue/date (tap to fill start + end)
+  const freeSlots = useMemo(() => {
+    const busy = dayBookings
+      .map((b) => [toMinutes(b.start_time) - buffer, toMinutes(b.end_time) + buffer])
+      .sort((a, b) => a[0] - b[0])
+    const out = []
+    let cur = toMinutes(dayStart)
+    for (const [s, e] of busy) {
+      if (s - cur >= 30) out.push([cur, s])
+      cur = Math.max(cur, e)
+    }
+    if (toMinutes(dayEnd) - cur >= 30) out.push([cur, toMinutes(dayEnd)])
+    return out.map(([s, e]) => [fromMinutes(s), fromMinutes(e)])
+  }, [dayBookings, buffer, dayStart, dayEnd])
 
   const clashes = useMemo(() => {
-    if (!form.start_time || !form.end_time) return []
+    if (!form.start_time || !form.end_time || toMinutes(form.end_time) <= toMinutes(form.start_time)) return []
     const s = fromMinutes(Math.max(0, toMinutes(form.start_time) - buffer))
     const e = fromMinutes(Math.min(24 * 60 - 1, toMinutes(form.end_time) + buffer))
     return dayBookings.filter((b) => overlaps(s, e, b.start_time, b.end_time))
@@ -156,6 +155,7 @@ export default function BookingForm() {
   }
   const pickStart = (t) => setForm((f) => {
     let end = f.end_time
+    if (!t) return { ...f, start_time: '' }
     if (!end || toMinutes(end) <= toMinutes(t)) {
       end = fromMinutes(Math.min(toMinutes(t) + 60, toMinutes(dayEnd)))
     }
@@ -168,6 +168,7 @@ export default function BookingForm() {
     if (!form.venue_id) return setError('Choose a venue.')
     if (!form.booking_date) return setError('Choose a date.')
     if (!form.start_time || !form.end_time) return setError('Choose start and end time.')
+    if (toMinutes(form.end_time) <= toMinutes(form.start_time)) return setError('End time must be after the start time.')
     if (clashes.length) return setError('The selected time overlaps an existing booking. Pick a free slot.')
     if (!/^[0-9]{10}$/.test(form.faculty_phone)) return setError('Phone number must be 10 digits.')
     if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(form.faculty_email)) return setError('Enter a valid email.')
@@ -315,24 +316,34 @@ export default function BookingForm() {
                 </div>
               )}
 
+              {freeSlots.length > 0 && (
+                <div>
+                  <div className="mb-1.5 text-sm font-medium">Free slots — tap to use:</div>
+                  <div className="flex flex-wrap gap-2">
+                    {freeSlots.map(([s, e]) => (
+                      <button key={s} type="button" onClick={() => setForm((f) => ({ ...f, start_time: s, end_time: e }))}
+                        className="rounded-full border border-emerald-300 bg-emerald-50 px-3 py-1 text-sm font-medium text-emerald-800 hover:bg-emerald-100 dark:border-emerald-800 dark:bg-emerald-950 dark:text-emerald-200">
+                        {fmtRange(s, e)}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="label" htmlFor="start">Start time</label>
-                  <select id="start" className="input" value={form.start_time} onChange={(e) => pickStart(e.target.value)} required>
-                    <option value="">Select</option>
-                    {startOptions.map((t) => (
-                      <option key={t} value={t} disabled={startTaken(t)}>{fmtTime(t)}{startTaken(t) ? ' — booked' : ''}</option>
-                    ))}
-                  </select>
+                  <TimePicker id="start" value={form.start_time} onChange={pickStart} min={dayStart} max={dayEnd} />
                 </div>
                 <div>
                   <label className="label" htmlFor="end">End time</label>
-                  <select id="end" className="input" value={form.end_time} onChange={set('end_time')} required disabled={!form.start_time}>
-                    <option value="">Select</option>
-                    {endOptions.map((t) => <option key={t} value={t}>{fmtTime(t)}</option>)}
-                  </select>
+                  <TimePicker id="end" value={form.end_time} onChange={set('end_time')} min={dayStart} max={dayEnd} />
                 </div>
               </div>
+              <p className="-mt-2 text-xs text-slate-500">Type a time (10:30, 2 pm, 1430) or tap the clock to choose.</p>
+              {form.start_time && form.end_time && toMinutes(form.end_time) <= toMinutes(form.start_time) && (
+                <div className="alert-error">End time must be after the start time.</div>
+              )}
 
               {clashes.length > 0 ? (
                 <div className="alert-error">
@@ -342,7 +353,7 @@ export default function BookingForm() {
                   {buffer > 0 && <div className="mt-1">A {buffer}-minute gap is required between events.</div>}
                   <div className="mt-1">Pick a time that doesn't overlap.</div>
                 </div>
-              ) : form.start_time && form.end_time ? (
+              ) : form.start_time && form.end_time && toMinutes(form.end_time) > toMinutes(form.start_time) ? (
                 <div className="alert-ok">✓ {fmtRange(form.start_time, form.end_time)} is available.</div>
               ) : null}
             </>

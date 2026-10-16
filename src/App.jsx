@@ -5,15 +5,16 @@ import { supabaseConfigured } from './lib/supabase'
 import AccountStatus from './pages/AccountStatus'
 import BookingForm from './pages/BookingForm'
 import Calendar from './pages/Calendar'
-import ComingSoon from './pages/ComingSoon'
 import Dashboard from './pages/Dashboard'
 import ForgotPassword from './pages/ForgotPassword'
 import Login from './pages/Login'
 import MyBookings from './pages/MyBookings'
 import Profile from './pages/Profile'
+import Reports from './pages/Reports'
 import ResetPassword from './pages/ResetPassword'
 import Signup from './pages/Signup'
 import Masters from './pages/admin/Masters'
+import Requests from './pages/admin/Requests'
 import Users from './pages/admin/Users'
 
 function Splash() {
@@ -66,8 +67,9 @@ export default function App() {
         <Route path="book" element={<BookingForm key="new" />} />
         <Route path="book/:id" element={<BookingForm key="edit" />} />
         <Route path="my-bookings" element={<MyBookings />} />
-        <Route path="reports" element={<ComingSoon title="Reports" />} />
+        <Route path="reports" element={<Reports />} />
         <Route path="profile" element={<Profile />} />
+        {isAdmin && <Route path="admin/requests" element={<Requests />} />}
         {isAdmin && <Route path="admin/users" element={<Users />} />}
         {isAdmin && <Route path="admin/masters" element={<Masters />} />}
         <Route path="*" element={<Navigate to="/" replace />} />
