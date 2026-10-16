@@ -4,7 +4,7 @@
 -- Tables, clash guard, row-level security, audit log, seed data.
 -- =====================================================================
 
-create extension if not exists btree_gist;
+create extension if not exists btree_gist with schema extensions;
 
 -- ---------------------------------------------------------------------
 -- Enums
