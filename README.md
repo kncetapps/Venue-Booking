@@ -32,11 +32,11 @@ Row-level security: users see the shared calendar, create bookings only once app
 1. **SQL Editor** → run the migration file (or apply it with the Supabase CLI).
 2. **Authentication → Sign In / Providers → Email**: keep *Confirm email* ON.
 3. **Authentication → URL Configuration**: Site URL = the Vercel URL; add `https://<vercel-url>/**` and `http://localhost:5173/**` to Redirect URLs.
-4. **First admin**: sign up in the app with the admin email, click the verification link, then run:
+4. **Admins**: emails in `public.admin_emails` become approved admins as soon as they sign up (after email verification). `kncetapps@gmail.com` is pre-listed. To add another:
    ```sql
-   update public.profiles set role = 'admin', status = 'approved'
-   where email = 'admin-email@example.com';
+   insert into public.admin_emails (email) values ('someone@example.com');
    ```
+   An existing user can also be made admin from the app's Users page.
 5. (Phase 3) **Authentication → Emails → SMTP**: Gmail SMTP (`smtp.gmail.com`, port 465, the college Gmail + App Password) so verification mails come from the college address.
 
 ## Local development
