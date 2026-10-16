@@ -3,7 +3,7 @@ import CollegeHeader from './CollegeHeader'
 export default function AuthCard({ title, subtitle, children, footer }) {
   return (
     <div className="min-h-dvh bg-gradient-to-br from-brand-800 via-brand-700 to-brand-600 px-4 py-6 sm:py-10">
-      <div className="mx-auto w-full max-w-3xl">
+      <div className="mx-auto w-full max-w-4xl">
         <CollegeHeader variant="card" />
       </div>
       <div className="mx-auto mt-6 w-full max-w-md">
