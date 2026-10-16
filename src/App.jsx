@@ -3,10 +3,13 @@ import Layout from './components/Layout'
 import { useAuth } from './lib/auth'
 import { supabaseConfigured } from './lib/supabase'
 import AccountStatus from './pages/AccountStatus'
+import BookingForm from './pages/BookingForm'
+import Calendar from './pages/Calendar'
 import ComingSoon from './pages/ComingSoon'
 import Dashboard from './pages/Dashboard'
 import ForgotPassword from './pages/ForgotPassword'
 import Login from './pages/Login'
+import MyBookings from './pages/MyBookings'
 import Profile from './pages/Profile'
 import ResetPassword from './pages/ResetPassword'
 import Signup from './pages/Signup'
@@ -58,9 +61,10 @@ export default function App() {
       <Route path="/reset-password" element={<ResetPassword />} />
       <Route element={<Layout />}>
         <Route index element={<Dashboard />} />
-        <Route path="calendar" element={<ComingSoon title="Calendar" />} />
-        <Route path="book" element={<ComingSoon title="New Booking" />} />
-        <Route path="my-bookings" element={<ComingSoon title="My Bookings" />} />
+        <Route path="calendar" element={<Calendar />} />
+        <Route path="book" element={<BookingForm key="new" />} />
+        <Route path="book/:id" element={<BookingForm key="edit" />} />
+        <Route path="my-bookings" element={<MyBookings />} />
         <Route path="reports" element={<ComingSoon title="Reports" />} />
         <Route path="profile" element={<Profile />} />
         {isAdmin && <Route path="admin/users" element={<Users />} />}
