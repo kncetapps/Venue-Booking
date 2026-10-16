@@ -1,5 +1,6 @@
 import { NavLink, Outlet } from 'react-router-dom'
 import { useAuth } from '../lib/auth'
+import CollegeHeader from './CollegeHeader'
 
 const Icon = ({ d }) => (
   <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -79,7 +80,7 @@ export default function Layout() {
       <header className="sticky top-0 z-20 flex items-center justify-between bg-brand-700 px-4 py-3 text-white md:hidden">
         <div className="flex items-center gap-2.5">
           <img src="/icon.svg" alt="" className="h-8 w-8" />
-          <span className="font-bold">Venue Booking</span>
+          <span className={`font-bold ${isAdmin ? 'hidden min-[420px]:inline' : ''}`}>Venue Booking</span>
         </div>
         <div className="flex items-center gap-1">
           {isAdmin && (
@@ -94,9 +95,12 @@ export default function Layout() {
         </div>
       </header>
 
-      <main className="mx-auto w-full max-w-6xl flex-1 px-4 pt-5 pb-28 md:px-8 md:pt-8 md:pb-10">
-        <Outlet />
-      </main>
+      <div className="min-w-0 flex-1">
+        <CollegeHeader />
+        <main className="mx-auto w-full max-w-6xl px-4 pt-5 pb-28 md:px-8 md:pt-7 md:pb-10">
+          <Outlet />
+        </main>
+      </div>
 
       {/* Mobile bottom navigation */}
       <nav className="fixed inset-x-0 bottom-0 z-20 grid grid-cols-5 border-t border-slate-200 bg-white pb-[env(safe-area-inset-bottom)] md:hidden dark:border-slate-800 dark:bg-slate-900">

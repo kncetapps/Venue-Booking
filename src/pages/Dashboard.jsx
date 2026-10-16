@@ -58,13 +58,13 @@ export default function Dashboard() {
           {pendingUsers > 0 && (
             <Link to="/admin/users" className="flex items-center justify-between rounded-2xl border border-amber-200 bg-amber-50 px-5 py-3.5 text-amber-900 dark:border-amber-900 dark:bg-amber-950 dark:text-amber-100">
               <span><b>{pendingUsers}</b> new sign-up{pendingUsers > 1 ? 's' : ''} waiting for approval</span>
-              <span className="font-semibold">Review →</span>
+              <span className="shrink-0 pl-3 font-semibold whitespace-nowrap">Review →</span>
             </Link>
           )}
           {pendingBookings > 0 && (
             <Link to="/admin/requests" className="flex items-center justify-between rounded-2xl border border-amber-200 bg-amber-50 px-5 py-3.5 text-amber-900 dark:border-amber-900 dark:bg-amber-950 dark:text-amber-100">
               <span><b>{pendingBookings}</b> booking / cancellation request{pendingBookings > 1 ? 's' : ''} waiting for a decision</span>
-              <span className="font-semibold">Review →</span>
+              <span className="shrink-0 pl-3 font-semibold whitespace-nowrap">Review →</span>
             </Link>
           )}
         </div>

@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useState } from 'react'
 import { StatusBadge, VenueDot } from '../components/BookingCard'
-import { STATUS, fmtDate, fmtRange, pad, toMinutes } from '../lib/format'
+import { COLLEGE } from '../lib/college'
+import { fmtDate, fmtRange, pad, toMinutes } from '../lib/format'
+import { exportReportPdf, reportRow } from '../lib/pdf'
 import { friendlyError, supabase } from '../lib/supabase'
 import { useMasters } from '../lib/useMasters'
 
@@ -61,9 +63,6 @@ export default function Reports() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [exporting, setExporting] = useState('')
-  const [settings, setSettings] = useState(null)
-
-  useEffect(() => { supabase.from('settings').select('*').maybeSingle().then(({ data }) => setSettings(data)) }, [])
 
   const range = mode === 'month' ? { from: `${month}-01`, to: monthEnd(month) }
     : mode === 'range' ? { from: from || null, to: to || null } : { from: null, to: null }
@@ -117,65 +116,26 @@ export default function Reports() {
     STATUS_OPTIONS.find((s) => s.value === status)?.label,
   ].filter(Boolean).join(' · ')
 
-  const tableRows = filtered.map((b, i) => [
-    i + 1,
-    fmtDate(b.booking_date),
-    fmtRange(b.start_time, b.end_time),
-    b.venue_name,
-    b.department,
-    b.event_type,
-    b.title,
-    b.faculty_name,
-    b.participants ?? '',
-    STATUS[b.status]?.label || b.status,
-    b.ref_no || '',
-  ])
-  const HEAD = ['#', 'Date', 'Time', 'Hall', 'Dept', 'Event type', 'Title', 'In-charge', 'Participants', 'Status', 'Ref no']
+  const tableRows = filtered.map(reportRow)
+  const HEAD = ['#', 'Date', 'Time', 'Hall', 'Dept', 'Event type', 'Title', 'In-charge', 'Entered by', 'Status', 'Ref no']
   const fileBase = `Venue-Bookings-${mode === 'month' ? month : new Date().toISOString().slice(0, 10)}`
+  const totalsText = `Total bookings: ${filtered.length}   ·   Total hours: ${fmtHours(totalHours)}`
+  const summaryItems = (items) => items.map((i) => [i.key, String(i.count), fmtHours(i.hours)])
 
   const exportPdf = async () => {
     setExporting('pdf')
     try {
-      const [{ jsPDF }, { default: autoTable }] = await Promise.all([import('jspdf'), import('jspdf-autotable')])
-      const doc = new jsPDF({ orientation: 'landscape', unit: 'pt', format: 'a4' })
-      const W = doc.internal.pageSize.getWidth()
-      doc.setFont('helvetica', 'bold'); doc.setFontSize(14)
-      doc.text(settings?.college_name || 'Kongunadu College of Engineering and Technology', W / 2, 40, { align: 'center' })
-      doc.setFont('helvetica', 'normal'); doc.setFontSize(10)
-      if (settings?.college_address) doc.text(settings.college_address, W / 2, 56, { align: 'center' })
-      doc.setFont('helvetica', 'bold'); doc.setFontSize(12)
-      doc.text('Venue Booking Report', W / 2, 78, { align: 'center' })
-      doc.setFont('helvetica', 'normal'); doc.setFontSize(9)
-      doc.text(filterText, W / 2, 93, { align: 'center' })
-      doc.text(`Total bookings: ${filtered.length}   ·   Total hours: ${fmtHours(totalHours)}`, W / 2, 106, { align: 'center' })
-      autoTable(doc, {
-        startY: 118,
-        head: [HEAD],
-        body: tableRows.map((r) => r.map(String)),
-        styles: { fontSize: 8, cellPadding: 4 },
-        headStyles: { fillColor: [30, 58, 138] },
-        alternateRowStyles: { fillColor: [241, 245, 249] },
-        columnStyles: { 0: { cellWidth: 22 }, 6: { cellWidth: 150 } },
-        didDrawPage: () => {
-          const H = doc.internal.pageSize.getHeight()
-          doc.setFontSize(8)
-          doc.text(`Generated ${new Date().toLocaleString('en-IN')}`, 40, H - 20)
-          doc.text(`Page ${doc.getNumberOfPages()}`, W - 40, H - 20, { align: 'right' })
-        },
+      await exportReportPdf({
+        filterText,
+        totals: totalsText,
+        rows: tableRows.map((r) => r.map(String)),
+        summaries: [
+          { title: 'Hall', items: summaryItems(byHall) },
+          { title: 'Department', items: summaryItems(byDept) },
+          { title: 'Event type', items: summaryItems(byType) },
+        ],
+        fileName: `${fileBase}.pdf`,
       })
-      // Summary page
-      doc.addPage()
-      doc.setFont('helvetica', 'bold'); doc.setFontSize(12)
-      doc.text('Summary', 40, 50)
-      const summary = (title, items, startY) => autoTable(doc, {
-        startY, head: [[title, 'Bookings', 'Hours']],
-        body: items.map((i) => [i.key, String(i.count), fmtHours(i.hours)]),
-        styles: { fontSize: 9 }, headStyles: { fillColor: [30, 58, 138] }, tableWidth: 340, margin: { left: 40 },
-      })
-      summary('Hall', byHall, 64)
-      summary('Department', byDept, doc.lastAutoTable.finalY + 20)
-      summary('Event type', byType, doc.lastAutoTable.finalY + 20)
-      doc.save(`${fileBase}.pdf`)
     } catch (e) {
       setError(`PDF export failed: ${e.message}`)
     }
@@ -186,24 +146,34 @@ export default function Reports() {
     setExporting('xlsx')
     try {
       const { default: writeExcelFile } = await import('write-excel-file/browser')
-      const bold = (v) => ({ value: v, fontWeight: 'bold' })
-      const main = [
-        [bold(settings?.college_name || 'Kongunadu College of Engineering and Technology')],
-        [bold('Venue Booking Report')],
-        [filterText],
-        [`Total bookings: ${filtered.length}`, null, `Total hours: ${totalHours}`],
+      const N = HEAD.length
+      const title = (v, size = 11) => ({ value: v, fontWeight: 'bold', fontSize: size, align: 'center', columnSpan: N })
+      const centre = (v) => ({ value: v, align: 'center', columnSpan: N })
+      const padRow = (cell) => [cell, ...Array(N - 1).fill(null)]
+      const letterhead = [
+        padRow(title(COLLEGE.name, 14)),
+        padRow(title(COLLEGE.status)),
+        ...COLLEGE.lines.map((l) => padRow(centre(l))),
+        padRow(title(COLLEGE.address, 10)),
         [],
-        HEAD.map(bold),
+      ]
+      const main = [
+        ...letterhead,
+        padRow(title('VENUE BOOKING REPORT', 12)),
+        padRow(centre(filterText)),
+        padRow(centre(totalsText)),
+        [],
+        HEAD.map((h) => ({ value: h, fontWeight: 'bold', backgroundColor: '#1E3A8A', textColor: '#FFFFFF' })),
         ...tableRows.map((r) => r.map((v) => (v === '' ? null : v))),
       ]
-      const sum = (title, items) => [
-        [bold(title), bold('Bookings'), bold('Hours')],
+      const sum = (t, items) => [
+        [{ value: t, fontWeight: 'bold' }, { value: 'Bookings', fontWeight: 'bold' }, { value: 'Hours', fontWeight: 'bold' }],
         ...items.map((i) => [i.key, i.count, Math.round(i.hours * 100) / 100]),
         [],
       ]
       const summary = [...sum('Hall', byHall), ...sum('Department', byDept), ...sum('Event type', byType)]
       await writeExcelFile([
-        { data: main, sheet: 'Bookings', columns: [{ width: 5 }, { width: 18 }, { width: 20 }, { width: 18 }, { width: 8 }, { width: 16 }, { width: 40 }, { width: 22 }, { width: 12 }, { width: 16 }, { width: 14 }] },
+        { data: main, sheet: 'Bookings', columns: [{ width: 5 }, { width: 18 }, { width: 20 }, { width: 18 }, { width: 8 }, { width: 16 }, { width: 40 }, { width: 22 }, { width: 22 }, { width: 16 }, { width: 14 }] },
         { data: summary, sheet: 'Summary', columns: [{ width: 30 }, { width: 10 }, { width: 10 }] },
       ]).toFile(`${fileBase}.xlsx`)
     } catch (e) {
@@ -304,10 +274,10 @@ export default function Reports() {
           <div className="p-4 text-slate-500">No bookings match these filters.</div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[860px] text-sm">
+            <table className="w-full min-w-[960px] text-sm">
               <thead className="bg-slate-50 text-left text-xs font-semibold tracking-wide text-slate-500 uppercase dark:bg-slate-800/50">
                 <tr>
-                  {['Date', 'Time', 'Hall', 'Dept', 'Event', 'In-charge', 'Status', 'Ref'].map((h) => <th key={h} className="px-4 py-2.5">{h}</th>)}
+                  {['Date', 'Time', 'Hall', 'Dept', 'Event', 'In-charge', 'Entered by', 'Status', 'Ref'].map((h) => <th key={h} className="px-4 py-2.5">{h}</th>)}
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
@@ -319,6 +289,7 @@ export default function Reports() {
                     <td className="px-4 py-2.5">{b.department}</td>
                     <td className="px-4 py-2.5"><div className="font-medium">{b.title}</div><div className="text-xs text-slate-500">{b.event_type}</div></td>
                     <td className="px-4 py-2.5">{b.faculty_name}</td>
+                    <td className="px-4 py-2.5">{b.booked_by_name || '—'}</td>
                     <td className="px-4 py-2.5"><StatusBadge status={b.status} /></td>
                     <td className="px-4 py-2.5 whitespace-nowrap text-slate-500">{b.ref_no || '—'}</td>
                   </tr>

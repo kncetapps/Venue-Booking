@@ -10,12 +10,13 @@ import { LIVE_STATUSES, fmtDateLong, toISODate, todayISO } from '../lib/format'
 import { supabase } from '../lib/supabase'
 import { useMasters } from '../lib/useMasters'
 import BookingCard, { VenueDot } from './BookingCard'
+import ConfirmationButton from './ConfirmationButton'
 
 const isPhone = () => window.matchMedia('(max-width: 767px)').matches
 
 /** The shared calendar of every venue's live bookings, with a day-details panel. */
 export default function BookingCalendar({ compact = false }) {
-  const { profile } = useAuth()
+  const { profile, isAdmin } = useAuth()
   const { venues } = useMasters()
   const calRef = useRef(null)
   const [venueFilter, setVenueFilter] = useState(null) // null = all venues
@@ -158,7 +159,8 @@ export default function BookingCalendar({ compact = false }) {
                 <div className="card text-slate-500">No bookings — every venue is free{venueFilter ? '' : ' this day'}.</div>
               ) : (
                 dayRows.map((b) => (
-                  <BookingCard key={b.id} b={b} highlight={b.id === selectedId} showContact />
+                  <BookingCard key={b.id} b={b} highlight={b.id === selectedId} showContact showBooker={isAdmin}
+                    actions={(isAdmin || b.user_id === profile.id) && b.status === 'approved' ? <ConfirmationButton b={b} /> : null} />
                 ))
               )}
               {selectedDate >= todayISO() && (

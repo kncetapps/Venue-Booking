@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import BookingCard from '../components/BookingCard'
+import ConfirmationButton from '../components/ConfirmationButton'
 import { useAuth } from '../lib/auth'
 import { todayISO } from '../lib/format'
 import { friendlyError, supabase } from '../lib/supabase'
@@ -75,8 +76,12 @@ export default function MyBookings() {
       </>
     }
     if (b.status === 'approved' && future) {
-      return <button className="btn-ghost py-2" onClick={() => { setReason(''); setDialog({ type: 'cancel', b }) }}>Request cancellation</button>
+      return <>
+        <ConfirmationButton b={b} />
+        <button className="btn-ghost py-2" onClick={() => { setReason(''); setDialog({ type: 'cancel', b }) }}>Request cancellation</button>
+      </>
     }
+    if (b.status === 'approved') return <ConfirmationButton b={b} />
     if (b.status === 'cancel_requested') {
       return <p className="text-sm text-orange-700 dark:text-orange-300">Waiting for the admin to approve the cancellation. The slot stays booked until then.</p>
     }

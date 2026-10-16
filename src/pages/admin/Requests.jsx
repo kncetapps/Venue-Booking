@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import BookingCard from '../../components/BookingCard'
+import ConfirmationButton from '../../components/ConfirmationButton'
 import { STATUS, fmtDate, todayISO } from '../../lib/format'
 import { friendlyError, supabase } from '../../lib/supabase'
 
@@ -87,7 +88,7 @@ export default function Requests() {
     const q = search.trim().toLowerCase()
     return rows
       .filter((b) => showPast || b.booking_date >= today)
-      .filter((b) => !q || [b.title, b.department, b.venue_name, b.faculty_name, b.ref_no, b.event_type, people[b.user_id]?.name]
+      .filter((b) => !q || [b.title, b.department, b.venue_name, b.faculty_name, b.ref_no, b.event_type, b.booked_by_name, b.booked_by_email]
         .some((v) => (v || '').toLowerCase().includes(q)))
       .sort((a, b) => (showPast ? -1 : 1) * (a.booking_date.localeCompare(b.booking_date) || a.start_time.localeCompare(b.start_time)))
   }, [tab, rows, pending, cancels, search, showPast, today, people])
@@ -117,6 +118,7 @@ export default function Requests() {
       buttons.push(<button key="ac" className="btn-danger py-2" onClick={() => ask('approveCancel', b)}>Approve cancellation</button>)
       buttons.push(<button key="rc" className="btn-ghost py-2" onClick={() => ask('rejectCancel', b)}>Keep booking</button>)
     }
+    if (b.status === 'approved') buttons.push(<ConfirmationButton key="pdf" b={b} />)
     if (b.status === 'approved' && b.booking_date >= today) {
       buttons.push(<Link key="e" to={`/book/${b.id}`} className="btn-ghost py-2">Edit / reschedule</Link>)
       buttons.push(<button key="c" className="btn-ghost py-2 text-rose-700 dark:text-rose-300" onClick={() => ask('adminCancel', b)}>Cancel</button>)
@@ -178,15 +180,12 @@ export default function Requests() {
       ) : (
         <div className="grid gap-3 lg:grid-cols-2">
           {shown.map((b) => {
-            const who = people[b.user_id]
             return (
               <div key={b.id} className="space-y-2">
-                <BookingCard b={b} showDate actions={actionsFor(b)} />
-                <div className="px-1 text-xs text-slate-500">
-                  Requested by <b>{who?.name || 'Unknown'}</b>{who?.department ? ` (${who.department})` : ''}{who?.email ? ` · ${who.email}` : ''}
-                  {' · '}{new Date(b.created_at).toLocaleString('en-IN', { day: '2-digit', month: 'short', hour: 'numeric', minute: '2-digit' })}
-                  {b.booking_date < today && b.status === 'pending' && <span className="ml-1 font-semibold text-rose-600">· date has passed</span>}
-                </div>
+                <BookingCard b={b} showDate showBooker actions={actionsFor(b)} />
+                {b.booking_date < today && b.status === 'pending' && (
+                  <div className="px-1 text-xs font-semibold text-rose-600">The event date has already passed.</div>
+                )}
                 {open[b.id] && <div className="card p-4"><History id={b.id} people={people} /></div>}
               </div>
             )
@@ -204,6 +203,9 @@ export default function Requests() {
               <div className="rounded-xl bg-slate-100 p-3 text-sm dark:bg-slate-800">
                 <div className="font-semibold">{b.title}</div>
                 <div className="text-slate-600 dark:text-slate-300">{b.venue_name} · {fmtDate(b.booking_date)} · {b.start_time.slice(0, 5)}–{b.end_time.slice(0, 5)} · {b.department}</div>
+                <div className="mt-1.5 border-t border-slate-200 pt-1.5 dark:border-slate-700">
+                  Entry by <b>{b.booked_by_name || 'Unknown'}</b>{b.booked_by_dept ? ` (${b.booked_by_dept})` : ''}{b.booked_by_email ? ` · ${b.booked_by_email}` : ''}
+                </div>
                 {b.cancel_reason && dialog.action.includes('Cancel') && dialog.action !== 'adminCancel' && (
                   <div className="mt-1">Reason given: “{b.cancel_reason}”</div>
                 )}

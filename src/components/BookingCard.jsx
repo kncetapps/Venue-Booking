@@ -21,7 +21,7 @@ const Row = ({ label, children }) =>
  * Full details of one booking. `b` is a row from booking_calendar (venue_name, venue_color…).
  * `showDate` adds the date line (lists); the day panel already shows it.
  */
-export default function BookingCard({ b, showDate = false, showContact = true, actions = null, highlight = false }) {
+export default function BookingCard({ b, showDate = false, showContact = true, actions = null, highlight = false, showBooker = false }) {
   return (
     <article
       className={`rounded-2xl border bg-white p-4 dark:bg-slate-900 ${highlight ? 'border-brand-500 ring-2 ring-brand-100 dark:ring-brand-800' : 'border-slate-200 dark:border-slate-800'}`}
@@ -44,6 +44,23 @@ export default function BookingCard({ b, showDate = false, showContact = true, a
         <StatusBadge status={b.status} />
       </div>
 
+      {showBooker && (
+        <div className="mt-3 rounded-xl bg-brand-50 px-3 py-2.5 text-sm ring-1 ring-brand-100 dark:bg-slate-800 dark:ring-slate-700">
+          <div className="text-xs font-semibold tracking-wide text-brand-700 uppercase dark:text-blue-300">Entry made by</div>
+          <div className="mt-0.5 font-semibold">
+            {b.booked_by_name || 'Unknown user'}
+            {b.booked_by_dept && <span className="font-normal text-slate-600 dark:text-slate-300"> · {b.booked_by_dept}</span>}
+          </div>
+          <div className="text-slate-600 dark:text-slate-300">
+            {b.booked_by_email && <a className="text-brand-600 dark:text-blue-300" href={`mailto:${b.booked_by_email}`}>{b.booked_by_email}</a>}
+            {b.booked_by_phone && <> · <a className="text-brand-600 dark:text-blue-300" href={`tel:${b.booked_by_phone}`}>{b.booked_by_phone}</a></>}
+          </div>
+          <div className="text-xs text-slate-500">
+            Submitted {new Date(b.created_at).toLocaleString('en-IN', { day: '2-digit', month: 'short', year: 'numeric', hour: 'numeric', minute: '2-digit' })}
+          </div>
+        </div>
+      )}
+
       <dl className="mt-3 space-y-1.5">
         <Row label="Department">{b.department}</Row>
         <Row label="Event type">{b.event_type}</Row>
@@ -53,7 +70,9 @@ export default function BookingCard({ b, showDate = false, showContact = true, a
         {showContact && <Row label="Email">{b.faculty_email && <a className="text-brand-600 dark:text-blue-300" href={`mailto:${b.faculty_email}`}>{b.faculty_email}</a>}</Row>}
         <Row label="Participants">{b.participants}</Row>
         <Row label="Requirements">{b.requirements}</Row>
+        {!showBooker && <Row label="Entered by">{b.booked_by_name && `${b.booked_by_name}${b.booked_by_dept ? ` (${b.booked_by_dept})` : ''}`}</Row>}
         <Row label="Reference">{b.ref_no}</Row>
+        <Row label="Approved by">{b.status !== 'pending' && b.approved_by_name}</Row>
         <Row label="Cancel reason">{b.cancel_reason}</Row>
         <Row label="Admin remark">{b.admin_remark}</Row>
       </dl>
